@@ -6,6 +6,8 @@ import CertaintyTag from "@/components/CertaintyTag";
 import SourceList from "@/components/SourceList";
 import ModuleSummaryCard from "@/components/ModuleSummaryCard";
 import QuickCheck from "@/components/QuickCheck";
+import LessonToc from "@/components/LessonToc";
+import LessonGlossaryDrawer from "@/components/LessonGlossaryDrawer";
 import { getQuickCheckForModule } from "@/lib/learningUtils";
 import { useProgress, completeModule, uncompleteModule } from "@/lib/progress";
 
@@ -78,6 +80,9 @@ export default function LearningDetail() {
 
   return (
     <div className="page learning-detail-page">
+      {/* Floating Side Glossary Drawer */}
+      <LessonGlossaryDrawer entityRefs={mod.entityRefs} />
+
       {/* Top Navigation & Breadcrumbs */}
       <nav className="breadcrumb flex-between">
         <Link to="/learning">← All Learning Modules</Link>
@@ -113,60 +118,90 @@ export default function LearningDetail() {
         entityRefs={mod.entityRefs}
       />
 
-      {/* Detailed Lesson Sections */}
-      <div className="lesson-body-sections">
-        {mod.sections.map((s, idx) => (
-          <section key={s.heading} className="section lesson-section">
-            <div className="lesson-section-head">
-              <span className="lesson-section-num">0{idx + 1}</span>
-              <h2>{s.heading}</h2>
-              {s.certainty && <CertaintyTag certainty={s.certainty} />}
-            </div>
-            <div className="lesson-section-content">
-              <Markdown text={s.body} />
-            </div>
-            {s.sources && s.sources.length > 0 && (
-              <div className="lesson-section-sources">
-                <SourceList sourceIds={s.sources} />
-              </div>
-            )}
-          </section>
-        ))}
-      </div>
-
-      {/* Quick Knowledge Check / Active Recall */}
-      {quickQuestions.length > 0 && (
-        <section className="section inline-quiz-section">
-          <QuickCheck
-            questions={quickQuestions}
-            onComplete={() => {
-              if (!done) completeModule(mod.id);
-            }}
-          />
-        </section>
-      )}
-
-      {/* Related Entities Knowledge Graph Bridge */}
-      {mod.entityRefs.length > 0 && (
-        <section className="section related-entities-section">
-          <h3>Connected Knowledge Graph</h3>
-          <p className="muted" style={{ marginBottom: "0.75rem" }}>
-            Explore deeper context for entities mentioned in this lesson:
-          </p>
-          <div className="tag-row">
-            {mod.entityRefs.map((refStr) => {
-              const e = resolveRef(refStr);
-              if (!e) return null;
-              const [type, rid] = refStr.split(":");
-              return (
-                <Link key={refStr} to={`/${type}/${rid}`} className="tag tag-link">
-                  {e.name}
-                </Link>
-              );
-            })}
+      {/* Two Column Layout: Main Content + Sticky Outline */}
+      <div className="lesson-content-layout">
+        {/* Left / Main Column */}
+        <div className="lesson-main-column">
+          {/* Detailed Lesson Sections */}
+          <div className="lesson-body-sections">
+            {mod.sections.map((s, idx) => (
+              <section key={s.heading} className="section lesson-section">
+                <div className="lesson-section-head">
+                  <span className="lesson-section-num">0{idx + 1}</span>
+                  <h2>{s.heading}</h2>
+                  {s.certainty && <CertaintyTag certainty={s.certainty} />}
+                </div>
+                <div className="lesson-section-content">
+                  <Markdown text={s.body} />
+                </div>
+                {s.sources && s.sources.length > 0 && (
+                  <div className="lesson-section-sources">
+                    <SourceList sourceIds={s.sources} />
+                  </div>
+                )}
+              </section>
+            ))}
           </div>
-        </section>
-      )}
+
+          {/* Quick Knowledge Check / Active Recall */}
+          {quickQuestions.length > 0 && (
+            <section className="section inline-quiz-section">
+              <QuickCheck
+                questions={quickQuestions}
+                onComplete={() => {
+                  if (!done) completeModule(mod.id);
+                }}
+              />
+            </section>
+          )}
+
+          {/* Related Entities Knowledge Graph Bridge */}
+          {mod.entityRefs.length > 0 && (
+            <section className="section related-entities-section">
+              <h3>Connected Knowledge Graph</h3>
+              <p className="muted" style={{ marginBottom: "0.75rem" }}>
+                Hover or click any tag for instant preview, or open in graph:
+              </p>
+              <div className="tag-row">
+                {mod.entityRefs.map((refStr) => {
+                  const e = resolveRef(refStr);
+                  if (!e) return null;
+                  const [type, rid] = refStr.split(":");
+                  return (
+                    <Link key={refStr} to={`/${type}/${rid}`} className="tag tag-link">
+                      {e.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* Right Sticky Column (Outline + Quick Reference) */}
+        <aside className="lesson-sidebar-column">
+          <div className="lesson-sidebar-sticky">
+            <LessonToc sections={mod.sections} />
+
+            <div className="lesson-sidebar-card">
+              <span className="sidebar-card-title">💡 Smart Navigation Tip</span>
+              <p className="sidebar-card-text">
+                Hover over any highlighted term in the text to see its instant definition without leaving the page!
+              </p>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-full"
+                onClick={() => {
+                  const btn = document.querySelector(".floating-glossary-btn") as HTMLButtonElement;
+                  if (btn) btn.click();
+                }}
+              >
+                📖 Open Lesson Glossary ({mod.entityRefs.length})
+              </button>
+            </div>
+          </div>
+        </aside>
+      </div>
 
       {/* Bottom Sticky Action Bar */}
       <footer className="lesson-bottom-nav">

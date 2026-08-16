@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { NavLink, Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { search, TYPE_LABEL } from "@/lib/search";
 import type { SearchHit } from "@/lib/search";
+import CommandPalette from "./CommandPalette";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -157,9 +158,23 @@ function ThemeToggle() {
 }
 
 export default function Layout() {
+  const [cmdOpen, setCmdOpen] = useState(false);
+
+  useEffect(() => {
+    function onGlobalKey(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCmdOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener("keydown", onGlobalKey);
+    return () => window.removeEventListener("keydown", onGlobalKey);
+  }, []);
+
   return (
     <div className="app">
       <ScrollToTop />
+      <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
       <header className="app-header">
         <Link to="/" className="brand">
           <span className="brand-mark">I</span>
@@ -168,7 +183,17 @@ export default function Layout() {
             <span className="brand-sub">Mastery</span>
           </span>
         </Link>
-        <SearchBox />
+        <div className="header-search-wrap">
+          <SearchBox />
+          <button
+            type="button"
+            className="cmd-trigger-badge"
+            onClick={() => setCmdOpen(true)}
+            title="Open instant search (Ctrl + K)"
+          >
+            ⌘K
+          </button>
+        </div>
         <ThemeToggle />
       </header>
       <div className="app-body">

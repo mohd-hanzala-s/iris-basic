@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import TermPreview from "./TermPreview";
 
 /**
  * Minimal, dependency-free markdown renderer supporting the subset used in
@@ -27,9 +27,9 @@ function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
         const [_, label, url] = m;
         if (url.startsWith("/")) {
           nodes.push(
-            <Link key={key} to={url}>
+            <TermPreview key={key} to={url}>
               {label}
-            </Link>
+            </TermPreview>
           );
         } else {
           nodes.push(
