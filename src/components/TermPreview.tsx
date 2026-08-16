@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getEntity, CERTAINTY_LABEL } from "@/data/index";
 import type { EntityType } from "@/data/types";
 import AudioPlayer from "./AudioPlayer";
@@ -42,30 +42,35 @@ export default function TermPreview({ to, children, className = "" }: TermPrevie
     placeAbove: false,
   });
 
-  const anchorRef = useRef<HTMLAnchorElement>(null);
+  const anchorRef = useRef<HTMLSpanElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navigate = useNavigate();
 
   const entityInfo = parseEntityPath(to);
   const entity = entityInfo ? getEntity(entityInfo) : null;
 
-  function showPopover() {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (!anchorRef.current || !entity) return;
-
+  function calculatePosition() {
+    if (!anchorRef.current) return;
     const rect = anchorRef.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
-    const placeAbove = spaceBelow < 220 && rect.top > 220;
+    const placeAbove = spaceBelow < 240 && rect.top > 240;
 
     setCoords({
       top: placeAbove ? rect.top - 8 : rect.bottom + 8,
       left: Math.min(Math.max(16, rect.left + rect.width / 2 - 160), window.innerWidth - 336),
       placeAbove,
     });
+  }
+
+  function showPopover() {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (!anchorRef.current || !entity) return;
+    calculatePosition();
     setOpen(true);
   }
 
-  function hidePopover(delay = 200) {
+  function hidePopover(delay = 180) {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       setOpen(false);
@@ -78,7 +83,7 @@ export default function TermPreview({ to, children, className = "" }: TermPrevie
     };
   }, []);
 
-  // If not a recognized entity link, just render standard Link
+  // If not a recognized entity link, render standard Link
   if (!entity || !entityInfo) {
     return (
       <Link to={to} className={className}>
@@ -89,27 +94,35 @@ export default function TermPreview({ to, children, className = "" }: TermPrevie
 
   return (
     <span
-      className="term-preview-wrapper"
+      ref={anchorRef}
+      className={`term-preview-wrapper ${open ? "is-open" : ""}`}
       onMouseEnter={showPopover}
-      onMouseLeave={() => hidePopover(250)}
-      onFocus={showPopover}
-      onBlur={() => hidePopover(250)}
+      onMouseLeave={() => hidePopover(220)}
     >
-      <Link
-        ref={anchorRef}
-        to={to}
-        className={`term-smart-link ${className}`}
+      <span
+        className={`term-smart-badge ${className}`}
+        role="button"
+        tabIndex={0}
         onClick={(e) => {
-          // On mobile / touch, first click reveals popover
-          if (window.innerWidth < 768 && !open) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!open) {
+            showPopover();
+          } else {
+            setOpen(false);
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             showPopover();
           }
         }}
+        title={`Click or hover for ${entity.name} definition`}
       >
         {children}
-        <span className="term-inline-icon">ℹ️</span>
-      </Link>
+        <span className="term-indicator-dot" aria-hidden="true" />
+      </span>
 
       {open && (
         <div
@@ -120,12 +133,12 @@ export default function TermPreview({ to, children, className = "" }: TermPrevie
             top: coords.placeAbove ? "auto" : `${coords.top}px`,
             bottom: coords.placeAbove ? `${window.innerHeight - coords.top}px` : "auto",
             left: `${coords.left}px`,
-            zIndex: 9999,
+            zIndex: 99999,
           }}
           onMouseEnter={() => {
             if (timerRef.current) clearTimeout(timerRef.current);
           }}
-          onMouseLeave={() => hidePopover(200)}
+          onMouseLeave={() => hidePopover(180)}
         >
           <div className="term-popover-header">
             <span className="term-category-badge">{entityInfo.type.toUpperCase()}</span>
@@ -141,13 +154,16 @@ export default function TermPreview({ to, children, className = "" }: TermPrevie
           <p className="term-popover-summary">{entity.summary}</p>
 
           <div className="term-popover-footer">
-            <Link
-              to={to}
+            <button
+              type="button"
               className="term-popover-btn"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                navigate(to);
+              }}
             >
               Open Full Entity Page →
-            </Link>
+            </button>
           </div>
         </div>
       )}

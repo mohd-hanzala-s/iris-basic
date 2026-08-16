@@ -1,24 +1,35 @@
 import React from "react";
 import TermPreview from "./TermPreview";
+import { autoHighlightTerms } from "@/lib/termMatcher";
 
 /**
- * Minimal, dependency-free markdown renderer supporting the subset used in
- * the knowledge base: headings, paragraphs, bold/italic, inline code, links,
- * bullet and ordered lists, and blockquotes. Internal links of the form
- * [text](/path) become router Links; external links open in a new tab.
+ * Enhanced markdown renderer supporting auto-highlighting of domain terms,
+ * headings, paragraphs, bold/italic, inline code, links, lists, and blockquotes.
  */
 function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   // tokenize: **bold**, *italic*, `code`, [text](url)
   const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
   const parts = text.split(regex);
+
   parts.forEach((part, i) => {
     if (!part) return;
     const key = `${keyPrefix}-${i}`;
+
     if (part.startsWith("**") && part.endsWith("**")) {
-      nodes.push(<strong key={key}>{part.slice(2, -2)}</strong>);
+      const inner = part.slice(2, -2);
+      nodes.push(
+        <strong key={key}>
+          {autoHighlightTerms(inner, `${key}-b`)}
+        </strong>
+      );
     } else if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
-      nodes.push(<em key={key}>{part.slice(1, -1)}</em>);
+      const inner = part.slice(1, -1);
+      nodes.push(
+        <em key={key}>
+          {autoHighlightTerms(inner, `${key}-em`)}
+        </em>
+      );
     } else if (part.startsWith("`") && part.endsWith("`")) {
       nodes.push(<code key={key}>{part.slice(1, -1)}</code>);
     } else if (part.startsWith("[") && part.includes("](")) {
@@ -42,9 +53,10 @@ function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
         nodes.push(part);
       }
     } else {
-      nodes.push(part);
+      nodes.push(...autoHighlightTerms(part, key));
     }
   });
+
   return nodes;
 }
 
