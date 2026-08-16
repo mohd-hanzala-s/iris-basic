@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
-import { masteryPath, followPaths, learningModules } from "@/data/index";
+import { masteryPath, followPaths } from "@/data/index";
 
 export default function StartHere() {
-  const snapshots = learningModules.filter((m) => m.track === "SNAPSHOT").sort((a, b) => a.order - b.order);
 
   return (
     <div className="page">
@@ -37,20 +36,35 @@ export default function StartHere() {
       </section>
 
       <section className="section">
-        <h2>Short on time?</h2>
-        <ol className="path-list">
-          {snapshots.map((m) => (
-            <li key={m.id}>
-              <Link to={`/learning/${m.id}`} className="path-item">
-                <span className="path-order">⌛</span>
-                <span className="path-body">
-                  <span className="path-title">{m.title}</span>
-                  <span className="path-summary">{m.summary}</span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ol>
+        <h2>Short on time? Pick a Fast Track</h2>
+        <div className="grid-3" style={{ marginBottom: "1.5rem" }}>
+          <div className="info-card">
+            <span className="badge-pill badge-time" style={{ marginBottom: "0.5rem" }}>⚡ 15 Mins</span>
+            <h3>Executive Briefing</h3>
+            <p className="muted">Rapid orientation on RegTech, IRIS positioning, and core reporting standards.</p>
+            <Link to="/learning/snapshot-5-minute-iris" className="entry-cta" style={{ marginTop: "0.5rem" }}>
+              Start 15-min track →
+            </Link>
+          </div>
+          <div className="info-card">
+            <span className="badge-pill badge-time" style={{ marginBottom: "0.5rem" }}>📊 45-60 Mins</span>
+            <h3>Commercial Kit</h3>
+            <p className="muted">Deep dive into IRIS products (CARBON, iDEAS), competitors, and market landscape.</p>
+            <Link to="/learning/level-4-iris-company" className="entry-cta" style={{ marginTop: "0.5rem" }}>
+              Start commercial track →
+            </Link>
+          </div>
+          <div className="info-card">
+            <span className="badge-pill badge-diff-mastery" style={{ marginBottom: "0.5rem" }}>🏆 10 Levels</span>
+            <h3>Full Mastery Path</h3>
+            <p className="muted">Complete end-to-end curriculum from foundational principles to advanced strategy.</p>
+            <Link to="/learning/regtech-from-zero" className="entry-cta" style={{ marginTop: "0.5rem" }}>
+              Start Level 1 →
+            </Link>
+          </div>
+        </div>
+
+        <h3>Guided Traversal Modes</h3>
         <div className="grid-2">
           {followPaths.map((fp) => (
             <Link key={fp.mode} to={`/follow/${fp.mode}`} className="info-card mode-card">
